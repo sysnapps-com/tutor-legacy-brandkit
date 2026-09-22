@@ -1,0 +1,59 @@
+{#-
+  Runs in the `code` stage (repo checked out at /openedx/edx-platform, root user, curl
+  present), before collectstatic. Anything here REQUIRES `tutor images build openedx`.
+  It is skipped entirely (renders nothing) unless the operator opted in.
+
+  Bind-mounting a local edx-platform checkout (`tutor mounts`) bypasses these edits.
+
+  ---- Tier 3: shared ACE email templates, colours only -------------------------------
+  The shared ACE templates hardcode hex colours and read none from context, so settings
+  cannot reach them. Instead of forking 260+ lines of upstream HTML we substitute ONE
+  stock colour at build time and FAIL THE BUILD if the stock colour is no longer there
+  (i.e. upstream changed), so an upgrade can never silently drop the branding.
+  Stock colour #005686 is used (in both ulmo.4 and verawood.1) for:
+    return_to_course_cta.html  -> the CTA button  -> BRANDKIT_COLOR_PRIMARY
+    base_body.html             -> footer action links -> BRANDKIT_COLOR_SECONDARY
+  BRANDKIT_COLOR_ACCENT has no stock counterpart and is not consumed.
+-#}
+{%- if BRANDKIT_ENABLE_EMAIL and (BRANDKIT_COLOR_PRIMARY or BRANDKIT_COLOR_SECONDARY) %}
+
+# tutor-legacy-brandkit: ACE email colours (Tier 3). Fails the build if upstream changed.
+RUN set -eu; \
+    ace=openedx/core/djangoapps/ace_common/templates/ace_common/edx_ace/common; \
+    recolor() { \
+      grep -qi "$2" "$1" || { echo "legacy-brandkit: stock colour $2 not found in $1; the upstream template changed, refusing to build a half-branded image" >&2; exit 1; }; \
+      sed -i "s|$2|$3|Ig" "$1"; \
+      grep -qi "$3" "$1"; \
+    }; \
+{%- if BRANDKIT_COLOR_PRIMARY %}
+    recolor "$ace/return_to_course_cta.html" '#005686' '{{ BRANDKIT_COLOR_PRIMARY | brandkit_color }}'; \
+{%- endif %}
+{%- if BRANDKIT_COLOR_SECONDARY %}
+    recolor "$ace/base_body.html" '#005686' '{{ BRANDKIT_COLOR_SECONDARY | brandkit_color }}'; \
+{%- endif %}
+    true
+{%- endif %}
+
+{%- if BRANDKIT_BAKE_STATIC_ASSETS and BRANDKIT_LOGO_PNG_URL %}
+
+# tutor-legacy-brandkit: bake logo.png into LMS static (Tier 1, opt-in). Makes
+# /theming/asset/images/logo.png (a 302 to /static/images/logo.png) serve the operator's logo.
+RUN set -eu; \
+    curl -fsSL --retry 3 --connect-timeout 20 -o /tmp/brandkit-logo.png {{ BRANDKIT_LOGO_PNG_URL | brandkit_shell_url }}; \
+    test "$(head -c 8 /tmp/brandkit-logo.png | od -An -tx1 | tr -d ' \n')" = "89504e470d0a1a0a" \
+      || { echo "legacy-brandkit: BRANDKIT_LOGO_PNG_URL did not return a PNG file" >&2; exit 1; }; \
+    install -D -m 0644 /tmp/brandkit-logo.png lms/static/images/logo.png; \
+    rm -f /tmp/brandkit-logo.png
+{%- endif %}
+
+{%- if BRANDKIT_BAKE_STATIC_ASSETS and BRANDKIT_FAVICON_URL %}
+
+# tutor-legacy-brandkit: bake favicon.ico into LMS static (Tier 1, opt-in). Fixes the root
+# /favicon.ico route and pages extending main_django.html (logout, wiki, OAuth authorize).
+RUN set -eu; \
+    curl -fsSL --retry 3 --connect-timeout 20 -o /tmp/brandkit-favicon.ico {{ BRANDKIT_FAVICON_URL | brandkit_shell_url }}; \
+    test "$(head -c 4 /tmp/brandkit-favicon.ico | od -An -tx1 | tr -d ' \n')" = "00000100" \
+      || { echo "legacy-brandkit: BRANDKIT_FAVICON_URL did not return an .ico file" >&2; exit 1; }; \
+    install -D -m 0644 /tmp/brandkit-favicon.ico lms/static/images/favicon.ico; \
+    rm -f /tmp/brandkit-favicon.ico
+{%- endif %}

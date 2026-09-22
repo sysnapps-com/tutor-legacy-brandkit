@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tutor-legacy-brandkit"
+dynamic = ["version"]
+description = "Brand-agnostic Tutor plugin for the Open edX branding surfaces Paragon tokens do not reach: legacy LMS pages, ACE emails, and an MFE audit checklist."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+# Tested on Tutor 21.0.9 (Ulmo) and 22.0.2 (Verawood); see docs/VERIFICATION.md.
+dependencies = ["tutor>=21.0.0,<23.0.0"]
+keywords = ["tutor", "open edx", "openedx", "branding", "logo", "ace", "email"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "tutor-mfe>=21.0.0,<23.0.0"]
+
+# Tutor discovers plugins through this entry point group. The entry-point name
+# ("legacy-brandkit") is the name used with `tutor plugins enable`.
+[project.entry-points."tutor.plugin.v1"]
+legacy-brandkit = "tutorlegacybrandkit.plugin"
+
+[tool.hatch.version]
+path = "src/tutorlegacybrandkit/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tutorlegacybrandkit"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/docs", "/scripts", "/tests", "/README.md", "/LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

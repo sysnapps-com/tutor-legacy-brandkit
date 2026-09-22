@@ -1,0 +1,8 @@
+# >>> tutor-legacy-brandkit >>> (generated from BRANDKIT_* settings; do not edit here)
+{#-
+  Studio (CMS) can send ACE emails too, and shares the platform's branding settings, so it
+  gets the same email-logo settings as the LMS. Studio's own header/footer branding is out
+  of scope for this plugin (see README "Scope").
+-#}
+{% include "legacy-brandkit/partials/email-logo.py" %}
+# <<< tutor-legacy-brandkit <<<

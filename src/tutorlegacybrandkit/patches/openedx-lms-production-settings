@@ -1,0 +1,37 @@
+# >>> tutor-legacy-brandkit >>> (generated from BRANDKIT_* settings; do not edit here)
+{#-
+  TIER 2 (settings only) for the legacy, server-rendered LMS.
+
+  Why the *production* patch: it is rendered last in the generated settings file, after
+  `from lms.envs.production import *` AND after Tutor's own partials/common_lms.py, which
+  itself assigns DEFAULT_EMAIL_LOGO_URL (line 22 on Tutor 21.0.9 and 22.0.2). On those
+  versions the *common* patch (line 50) also renders after that assignment, so the claim
+  "the common patch loses to the default" is NOT reproducible there; production is used
+  because it is strictly safer regardless. See docs/VERIFICATION.md.
+
+  What each setting drives (read from openedx-platform release/ulmo.4 + verawood.1):
+    LOGO_URL            -> branding_api.get_logo_url(): the legacy header logo, which the
+                           legacy dashboard inherits via main.html. Site-configuration
+                           `logo_image_url` (DB) takes precedence over this setting.
+    LOGO_TRADEMARK_URL  -> branding_api._footer_logo_img(): the legacy footer logo.
+    FAVICON_URL         -> branding_api.get_favicon_url(): used by main.html. NOTE: the
+                           root /favicon.ico route and templates extending main_django.html
+                           use FAVICON_PATH (a *static* path), which a URL cannot change;
+                           see BRANDKIT_BAKE_STATIC_ASSETS (Tier 1).
+  No template is overridden: header.html / footer.html / dashboard.html stay stock.
+-#}
+{%- if BRANDKIT_ENABLE_LMS %}
+{%- set _brandkit_header_logo = BRANDKIT_LOGO_PNG_URL or BRANDKIT_LOGO_SVG_URL %}
+{%- if _brandkit_header_logo %}
+LOGO_URL = {{ _brandkit_header_logo | brandkit_url }}
+{%- endif %}
+{%- set _brandkit_footer_logo = BRANDKIT_LOGO_TRADEMARK_SVG_URL or _brandkit_header_logo %}
+{%- if _brandkit_footer_logo %}
+LOGO_TRADEMARK_URL = {{ _brandkit_footer_logo | brandkit_url }}
+{%- endif %}
+{%- if BRANDKIT_FAVICON_URL %}
+FAVICON_URL = {{ BRANDKIT_FAVICON_URL | brandkit_url }}
+{%- endif %}
+{%- endif %}
+{% include "legacy-brandkit/partials/email-logo.py" %}
+# <<< tutor-legacy-brandkit <<<

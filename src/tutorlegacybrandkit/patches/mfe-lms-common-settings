@@ -1,0 +1,37 @@
+# >>> tutor-legacy-brandkit >>> (generated from BRANDKIT_* settings; do not edit here)
+{#-
+  TIER 2 (settings only) for MFEs, using the documented MFE_CONFIG keys.
+
+  This patch name is rendered by tutor-mfe (into the LMS settings file, AFTER it defines
+  MFE_CONFIG), so:
+    * without tutor-mfe installed this patch is never rendered (no NameError);
+    * it works for both development and production settings.
+
+  Only keys the operator supplied are written; unset keys keep tutor-mfe's defaults.
+
+  Deliberately NOT written: FRONTEND_SITE_CONFIG. tutor-mfe 21.x does not define it, and
+  on Verawood the platform's mfe_config_api already translates MFE_CONFIG["LOGO_URL"] to
+  frontend-base's `headerLogoImageUrl`. LOGO_WHITE_URL / LOGO_TRADEMARK_URL / FAVICON_URL
+  have no entry in that translation map, so whether frontend-base consumes them is
+  UNVERIFIED (see docs/VERIFICATION.md).
+
+  If another plugin (e.g. a Paragon/theme plugin) also writes these MFE_CONFIG keys, the
+  plugin applied last wins. Give each key exactly one owner; set BRANDKIT_ENABLE_MFE=false
+  here to defer to the other plugin.
+-#}
+{%- if BRANDKIT_ENABLE_MFE %}
+{%- set _brandkit_mfe_logo = BRANDKIT_LOGO_SVG_URL or BRANDKIT_LOGO_PNG_URL %}
+{%- if _brandkit_mfe_logo %}
+MFE_CONFIG["LOGO_URL"] = {{ _brandkit_mfe_logo | brandkit_url }}
+{%- endif %}
+{%- if BRANDKIT_LOGO_WHITE_SVG_URL %}
+MFE_CONFIG["LOGO_WHITE_URL"] = {{ BRANDKIT_LOGO_WHITE_SVG_URL | brandkit_url }}
+{%- endif %}
+{%- if BRANDKIT_LOGO_TRADEMARK_SVG_URL %}
+MFE_CONFIG["LOGO_TRADEMARK_URL"] = {{ BRANDKIT_LOGO_TRADEMARK_SVG_URL | brandkit_url }}
+{%- endif %}
+{%- if BRANDKIT_FAVICON_URL %}
+MFE_CONFIG["FAVICON_URL"] = {{ BRANDKIT_FAVICON_URL | brandkit_url }}
+{%- endif %}
+{%- endif %}
+# <<< tutor-legacy-brandkit <<<
