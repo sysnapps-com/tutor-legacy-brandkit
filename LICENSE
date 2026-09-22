@@ -19,3 +19,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+Disclaimer: this software modifies Django settings and, optionally, Docker
+build steps for an Open edX / Tutor deployment. It is provided "as is" with no
+guarantee that it is fit for any particular Open edX release, deployment, or
+purpose. Test it in a non-production environment before applying it to a
+production instance. See docs/VERIFICATION.md for what has and has not been
+verified.
